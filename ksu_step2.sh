@@ -129,12 +129,16 @@ echo "OPLUS安全模块已恢复"
 
 # 模块在 boot_completed 之前自动执行，时序更优
 echo 2 > /proc/sys/kernel/kptr_restrict
-#
-# RESETPROP="/data/adb/ksu/bin/resetprop"
-# hide_prop() { ... }
-# hide_prop ro.boot.verifiedbootstate green
-# ...（所有 hide_prop 调用已移至模块）
-restorecon /dev/__properties__/u:object_r:userdebug_or_eng_prop:s0
+
+# 隐藏 ro.boot.selinux（模块 service.sh 也会执行，这里作为后备）
+RESETPROP="/data/adb/ksu/bin/resetprop"
+CURRENT=$($RESETPROP "ro.boot.selinux" 2>/dev/null)
+if [ -n "$CURRENT" ] && [ "$CURRENT" != "enforcing" ]; then
+    $RESETPROP -n "ro.boot.selinux" "enforcing"
+    echo "[OK] ro.boot.selinux -> enforcing"
+fi
+
+restorecon /dev/__properties__/u:object_r:userdebug_or_eng_prop:s0 2>/dev/null
 
 rm -f /data/local/tmp/kallsyms.txt
 rm -f /data/local/tmp/kernelsu_patched.ko

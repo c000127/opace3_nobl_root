@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal
+set PYTHONUTF8=1
 
 echo ===============================================
 echo   KernelSU 一键加载 v2
@@ -23,6 +24,22 @@ if errorlevel 1 (
     goto :fail
 )
 echo [OK] ADB 已连接
+
+:check_root
+echo 正在检查 Root Shell 环境...
+set "USER_ID="
+for /f "tokens=*" %%i in ('adb shell id') do set "USER_ID=%%i"
+echo %USER_ID% | findstr "uid=0(root)" >nul
+if not errorlevel 1 goto root_ok
+
+echo [X] Current ADB is NOT Root Environment!
+echo Please check device authorization or ensure your ROM supports default root shell.
+echo Press any key to retry...
+pause >nul
+goto check_root
+
+:root_ok
+echo [OK] 发现 Root Shell Environment
 echo.
 
 :: ─── 推送脚本 + ksud ───
@@ -49,30 +66,28 @@ echo [1/5] 拉取 kallsyms...
 if exist "%KALLSYMS%" del "%KALLSYMS%" >nul 2>&1
 if exist "%PATCHED%" del "%PATCHED%" >nul 2>&1
 
-adb shell "sh /data/local/tmp/ksu_step1.sh > /storage/emulated/0/ksu_result.txt 2>&1" >nul 2>&1
-
-echo 等待 kallsyms 拉取...
-timeout /t 15 /nobreak >nul
-
-:: 拉取到 PC
+:: 同步执行并拉取
+adb shell "sh /data/local/tmp/ksu_step1.sh" >nul 2>&1
 adb pull /data/local/tmp/kallsyms.txt "%KALLSYMS%" >nul 2>&1
+
 if not exist "%KALLSYMS%" (
-    echo [!] 第一次拉取失败，多等10秒重试...
-    timeout /t 10 /nobreak >nul
+    echo [!] kallsyms 拉取失败，重试中...
+    adb shell "sh /data/local/tmp/ksu_step1.sh" >nul 2>&1
     adb pull /data/local/tmp/kallsyms.txt "%KALLSYMS%" >nul 2>&1
 )
+
 if not exist "%KALLSYMS%" (
-    echo [X] kallsyms 拉取失败
+    echo [X] kallsyms 拉取完全失败
     goto :fail
 )
-echo [OK] kallsyms 已拉取
+echo [OK] kallsyms 已拉取到本地
 echo.
 
 :: =====================================
 echo [2/5] 补丁内核模块 (PC端 Python)...
 :: =====================================
 
-.\python\python.exe "%PATCHER%" "%KO%" "%KALLSYMS%" "%PATCHED%"
+.\python\python.exe "%PATCHER%" "%KO%" "%KALLSYMS%" "%PATCHED%" >nul 2>&1
 if errorlevel 1 (
     echo [X] 补丁失败
     goto :fail
@@ -85,39 +100,34 @@ echo [OK] 补丁完成
 echo.
 
 :: =====================================
-echo [3-5/5] 加载模块 + 部署ksud + 触发Manager...
+echo [3/5] 加载内核模块 (insmod)...
+echo [4/5] 部署 ksud 守护进程...
+echo [5/5] 安装隐藏环境与触发识别...
 :: =====================================
 
 :: 推送补丁后的 ko
 adb push "%PATCHED%" /data/local/tmp/kernelsu_patched.ko >nul 2>&1
 
-:: 执行 step2 (insmod + ksud + trigger)
-adb shell "sh /data/local/tmp/ksu_step2.sh > /storage/emulated/0/ksu_result.txt 2>&1" >nul 2>&1
-
-echo 等待加载完成...
-timeout /t 20 /nobreak >nul
-
-:: 显示完整结果
-echo.
-echo ========== 执行结果 ==========
-adb shell cat /storage/emulated/0/ksu_result.txt
+:: 执行 step2 (完全静默模式)
+adb shell "sh /data/local/tmp/ksu_step2.sh" >nul 2>&1
+echo [OK] 设备端流程执行完备
 echo.
 
 :: 检查是否成功
-adb shell cat /storage/emulated/0/ksu_result.txt 2>nul | findstr "ALL_DONE" >nul 2>&1
+adb shell "grep -q 'kernelsu' /proc/modules"
 if not errorlevel 1 (
     echo ===============================================
-    echo   加载完成！打开 KernelSU Manager 检查状态
+    echo   加载完成！正在重启 KernelSU Manager...
     echo ===============================================
+    adb shell "am force-stop me.weishu.kernelsu && am start -n me.weishu.kernelsu/.ui.MainActivity" >nul 2>&1
 ) else (
     echo ===============================================
-    echo   可能未完全成功，请检查上面的输出
+    echo   可能未完全成功，请检查上方输出。
     echo ===============================================
 )
-:: 清理结果文件
+
+:: 清理过程临时文件
 adb shell rm -f /data/local/tmp/ksu_step2.sh >nul 2>&1
-adb shell rm -f /storage/emulated/0/ksu_result.txt >nul 2>&1
-adb shell rm -rf /data/local/tmp/ksu_hide_module >nul 2>&1
 
 if exist "%KALLSYMS%" del "%KALLSYMS%" >nul 2>&1
 if exist "%PATCHED%" del "%PATCHED%" >nul 2>&1
@@ -128,5 +138,5 @@ goto :eof
 
 :fail
 echo.
-echo [X] 加载失败，请检查上面的错误信息
+echo [X] 执行失败，请检查报错内容。
 pause
