@@ -1,6 +1,6 @@
 # 免解锁 Bootloader Root 方案
 
-**适用设备**: OnePlus Ace 3 (OP5CF9L1)  
+**适用设备**: OnePlus Ace 3 
 **系统版本**: Android 13 / kernel 5.15  
 **Root 方案**: KernelSU (LKM 运行时加载) + ZygiskSU + LSPosed  
 **原理**: 利用已有的 root shell 权限，在运行时加载 KernelSU 内核模块
@@ -10,7 +10,7 @@
 ## 前提条件
 
 1. **ADB 已连接** — USB 调试已打开，设备已授权
-2. **Root Shell** — 可通过 ADB 获得 root 权限（`adb shell` 直接为 root）
+2. **Root Shell** — 可通过高通提权漏洞，搭配 [Magica](https://github.com/vvb2060/Magica) 获得 adb root 权限（`adb shell` 直接为 root）
 3. **Windows 电脑** — 运行一键脚本（自带嵌入式 Python，无需额外安装）
 4. **KernelSU Manager** — 已安装到设备（`ksu_manager.apk`）
 
