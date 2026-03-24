@@ -2,14 +2,14 @@
 chcp 65001 >nul
 setlocal
 
-echo ═══════════════════════════════════════════════
+echo ===============================================
 echo   KernelSU 一键加载 v2
 echo   每次开机后运行此脚本
-echo ═══════════════════════════════════════════════
+echo ===============================================
 echo.
 
 set "DIR=%~dp0"
-set "KO=%DIR%android15-6.6_kernelsu.ko"
+set "KO=%DIR%android13-5.15_kernelsu.ko"
 set "PATCHED=%DIR%kernelsu_patched.ko"
 set "KSUD=%DIR%ksud-aarch64-linux-android"
 set "PATCHER=%DIR%patch_ksu_module.py"
@@ -30,18 +30,26 @@ echo 推送文件到设备...
 adb push "%DIR%ksu_step1.sh" /data/local/tmp/ksu_step1.sh >nul 2>&1
 adb push "%DIR%ksu_step2.sh" /data/local/tmp/ksu_step2.sh >nul 2>&1
 adb push "%KSUD%" /data/local/tmp/ksud-aarch64 >nul 2>&1
+:: 自动修复安卓内的换行格式
+adb shell "sed -i 's/\r$//' /data/local/tmp/ksu_step1.sh" >nul 2>&1
+adb shell "sed -i 's/\r$//' /data/local/tmp/ksu_step2.sh" >nul 2>&1
+:: 推送隐藏模块（整个目录）
+adb shell "rm -rf /data/local/tmp/ksu_hide_module" >nul 2>&1
+adb push "%DIR%ksu_hide_module" /data/local/tmp/ksu_hide_module >nul 2>&1
+:: 修复模块内所有 shell 脚本的换行格式
+adb shell "find /data/local/tmp/ksu_hide_module -name '*.sh' -exec sed -i 's/\r$//' {} +" >nul 2>&1
 echo [OK] 文件已推送
 echo.
 
-:: ═════════════════════════════════════
+:: =====================================
 echo [1/5] 拉取 kallsyms...
-:: ═════════════════════════════════════
+:: =====================================
 
 :: 始终重新拉取（重启后 KASLR 地址变了）
 if exist "%KALLSYMS%" del "%KALLSYMS%" >nul 2>&1
 if exist "%PATCHED%" del "%PATCHED%" >nul 2>&1
 
-adb shell service call miui.mqsas.IMQSNative 21 i32 1 s16 "sh" i32 1 s16 "/data/local/tmp/ksu_step1.sh" s16 "/storage/emulated/0/ksu_result.txt" i32 60 >nul 2>&1
+adb shell "sh /data/local/tmp/ksu_step1.sh > /storage/emulated/0/ksu_result.txt 2>&1" >nul 2>&1
 
 echo 等待 kallsyms 拉取...
 timeout /t 15 /nobreak >nul
@@ -60,9 +68,9 @@ if not exist "%KALLSYMS%" (
 echo [OK] kallsyms 已拉取
 echo.
 
-:: ═════════════════════════════════════
+:: =====================================
 echo [2/5] 补丁内核模块 (PC端 Python)...
-:: ═════════════════════════════════════
+:: =====================================
 
 .\python\python.exe "%PATCHER%" "%KO%" "%KALLSYMS%" "%PATCHED%"
 if errorlevel 1 (
@@ -76,37 +84,44 @@ if not exist "%PATCHED%" (
 echo [OK] 补丁完成
 echo.
 
-:: ═════════════════════════════════════
+:: =====================================
 echo [3-5/5] 加载模块 + 部署ksud + 触发Manager...
-:: ═════════════════════════════════════
+:: =====================================
 
 :: 推送补丁后的 ko
 adb push "%PATCHED%" /data/local/tmp/kernelsu_patched.ko >nul 2>&1
 
 :: 执行 step2 (insmod + ksud + trigger)
-adb shell service call miui.mqsas.IMQSNative 21 i32 1 s16 "sh" i32 1 s16 "/data/local/tmp/ksu_step2.sh" s16 "/storage/emulated/0/ksu_result.txt" i32 60 >nul 2>&1
+adb shell "sh /data/local/tmp/ksu_step2.sh > /storage/emulated/0/ksu_result.txt 2>&1" >nul 2>&1
 
 echo 等待加载完成...
-timeout /t 25 /nobreak >nul
+timeout /t 20 /nobreak >nul
 
 :: 显示完整结果
 echo.
-echo ══════════ 执行结果 ══════════
+echo ========== 执行结果 ==========
 adb shell cat /storage/emulated/0/ksu_result.txt
 echo.
 
 :: 检查是否成功
 adb shell cat /storage/emulated/0/ksu_result.txt 2>nul | findstr "ALL_DONE" >nul 2>&1
 if not errorlevel 1 (
-    echo ═══════════════════════════════════════════════
+    echo ===============================================
     echo   加载完成！打开 KernelSU Manager 检查状态
-    echo   如需重启框架(LSPosed): restart_framework.bat
-    echo ═══════════════════════════════════════════════
+    echo ===============================================
 ) else (
-    echo ═══════════════════════════════════════════════
-    echo   [!] 可能未完全成功，请检查上面的输出
-    echo ═══════════════════════════════════════════════
+    echo ===============================================
+    echo   可能未完全成功，请检查上面的输出
+    echo ===============================================
 )
+:: 清理结果文件
+adb shell rm -f /data/local/tmp/ksu_step2.sh >nul 2>&1
+adb shell rm -f /storage/emulated/0/ksu_result.txt >nul 2>&1
+adb shell rm -rf /data/local/tmp/ksu_hide_module >nul 2>&1
+
+if exist "%KALLSYMS%" del "%KALLSYMS%" >nul 2>&1
+if exist "%PATCHED%" del "%PATCHED%" >nul 2>&1
+
 echo.
 pause
 goto :eof

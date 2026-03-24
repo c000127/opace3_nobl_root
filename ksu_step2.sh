@@ -6,8 +6,26 @@ echo "========================================"
 echo " KernelSU 加载 Step 2"
 echo "========================================"
 
-# === insmod ===
+# === 卸载 OPLUS 安全模块 (防止 ksud 被内核杀死) ===
 echo ""
+echo "=== 卸载 OPLUS 安全模块 ==="
+rmmod oplus_security_guard 2>/dev/null && echo "已卸载 oplus_security_guard" || echo "oplus_security_guard 不存在或已卸载"
+rmmod oplus_secure_harden 2>/dev/null && echo "已卸载 oplus_secure_harden" || echo "oplus_secure_harden 不存在或已卸载"
+rmmod oplus_security_keventupload 2>/dev/null && echo "已卸载 oplus_security_keventupload" || echo "oplus_security_keventupload 不存在或已卸载"
+
+# 停止用户空间安全服务
+stop riskdetect 2>/dev/null
+stop oplus_kevents 2>/dev/null
+stop bsp_kevent 2>/dev/null
+stop qsguard 2>/dev/null
+echo "安全服务已停止"
+
+# SELinux 设为宽容模式
+setenforce 0
+echo "SELinux: $(getenforce)"
+echo ""
+
+# === insmod ===
 echo "=== 加载内核模块 ==="
 if grep -q "kernelsu" /proc/modules 2>/dev/null; then
     echo "已加载，跳过"
@@ -29,12 +47,15 @@ echo ""
 echo "=== 部署 ksud ==="
 mkdir -p "$KSU_DIR/bin" "$KSU_DIR/log" "$KSU_DIR/modules"
 
+# 直接拷贝 ksud (不使用符号链接)
 if [ -f /data/local/tmp/ksud-aarch64 ]; then
     cp /data/local/tmp/ksud-aarch64 "$KSU_DIR/bin/ksud"
     chmod 755 "$KSU_DIR/bin/ksud"
+    cp /data/local/tmp/ksud-aarch64 /data/adb/ksud
+    chmod 755 /data/adb/ksud
 fi
 chown -R 0:1000 "$KSU_DIR" 2>/dev/null
-echo "ksud 就绪"
+echo "ksud 就绪: $($KSU_DIR/bin/ksud -V 2>&1)"
 echo ""
 
 # === ksud 启动阶段 ===
@@ -42,8 +63,6 @@ echo "=== 执行启动阶段 ==="
 "$KSU_DIR/bin/ksud" post-fs-data 2>&1
 
 # 修复: 删除 KSU 自己创建的 magisk 兼容符号链接
-# 否则 Manager 的 hasMagisk() 会通过 root shell 的 which magisk 找到它
-# 导致误报 "因与magisk有冲突 所有模块不可用"
 if [ -L "$KSU_DIR/bin/magisk" ]; then
     rm -f "$KSU_DIR/bin/magisk"
     echo "已移除 magisk 兼容链接 (防止误检测)"
@@ -54,20 +73,22 @@ fi
 echo "启动阶段完成"
 echo ""
 
-# === 触发 Manager 识别 ===
-echo "=== 触发 Manager 识别 ==="
-APK_PATH=$(pm path me.weishu.kernelsu 2>/dev/null | head -1 | cut -d: -f2)
-if [ -z "$APK_PATH" ]; then
-    echo "Manager 未安装！跳过"
+# === 安装 KSU 隐藏模块（覆盖安装整个目录）===
+echo "=== 安装隐藏 Root 环境模块 ==="
+MODULE_DIR="/data/adb/modules/ace3_hide_environment"
+if [ -d /data/local/tmp/ksu_hide_module ]; then
+    rm -rf "$MODULE_DIR"
+    mkdir -p "$MODULE_DIR"
+    cp -r /data/local/tmp/ksu_hide_module/* "$MODULE_DIR/"
+    chmod 755 "$MODULE_DIR/service.sh"
+    chmod 755 "$MODULE_DIR/action.sh" 2>/dev/null
+    chmod -R 755 "$MODULE_DIR/bin" 2>/dev/null
+    echo "[OK] 隐藏模块已安装到 $MODULE_DIR"
 else
-    echo "APK: $APK_PATH"
-    cp "$APK_PATH" /data/local/tmp/_mgr_tmp.apk
-    pm install -r /data/local/tmp/_mgr_tmp.apk 2>&1
-    rm -f /data/local/tmp/_mgr_tmp.apk
-    sleep 2
-    dmesg | grep "install fd for manager" | tail -1
+    echo "[!] 模块目录未找到，跳过安装"
 fi
-echo ""
+
+
 
 # === 状态 ===
 echo "=== 最终状态 ==="
@@ -79,9 +100,51 @@ fi
 
 "$KSU_DIR/bin/ksud" -V 2>&1
 
+# 检查 Manager 是否被 crown
+echo ""
+echo "=== Manager 检测 ==="
+dmesg | grep -i "crowning\|manager pkg\|is_manager: 1" | tail -5
+if dmesg | grep -q "Crowning manager"; then
+    echo "[OK] Manager 已被内核识别"
+else
+    echo "[!] Manager 未被内核识别"
+fi
+
 echo ""
 echo "=== 最近 KernelSU 日志 ==="
 dmesg | grep -i "KernelSU" | tail -10
 echo ""
 
+# === 恢复 OPLUS 安全模块===
+echo ""
+echo "=== 恢复 OPLUS 安全模块 ==="
+modprobe oplus_secure_harden 2>/dev/null
+modprobe oplus_security_guard 2>/dev/null
+modprobe oplus_security_keventupload 2>/dev/null
+start riskdetect
+start oplus_kevents
+start bsp_kevent
+start qsguard
+echo "OPLUS安全模块已恢复"
+
+# === 隐藏 Root 环境 (已移至 KSU 模块 ksu_hide_module/service.sh) ===
+# 模块在 boot_completed 之前自动执行，时序更优
+echo 2 > /proc/sys/kernel/kptr_restrict
+#
+# RESETPROP="/data/adb/ksu/bin/resetprop"
+# hide_prop() { ... }
+# hide_prop ro.boot.verifiedbootstate green
+# ...（所有 hide_prop 调用已移至模块）
+restorecon /dev/__properties__/u:object_r:userdebug_or_eng_prop:s0
+
+rm -f /data/local/tmp/kallsyms.txt
+rm -f /data/local/tmp/kernelsu_patched.ko
+rm -f /data/local/tmp/ksud-aarch64
+rm -f /data/local/tmp/ksu_step1.sh
+rm -rf /data/local/tmp/ksu_hide_module
+# 注意：不删除 ksu_step2.sh 自身（正在执行中）
+echo "临时文件已清理"
+
 echo "ALL_DONE"
+
+setenforce 1
