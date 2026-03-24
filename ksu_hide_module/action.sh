@@ -13,8 +13,8 @@ while true; do
   timeout 1 getevent -lc 1 2>&1 | grep KEY_VOLUME > "$TMPDIR/events"
 
   if [ $(( NOW_TIME - START_TIME )) -gt 8 ]; then
-    ui_print "— 超时未执行功能，默认执行环境隐藏..."
-    /data/adb/modules/ace3_hide_environment/bin/hide_env.sh
+    ui_print "— 超时未执行功能，结束运行"
+    # /data/adb/modules/ace3_hide_environment/bin/hide_env.sh
     break
   elif grep -q KEY_VOLUMEUP "$TMPDIR/events"; then
     ui_print "— 检测到音量加键 → 重载模块"

@@ -80,7 +80,7 @@ if [ -d /data/local/tmp/ksu_hide_module ]; then
     rm -rf "$MODULE_DIR"
     mkdir -p "$MODULE_DIR"
     cp -r /data/local/tmp/ksu_hide_module/* "$MODULE_DIR/"
-    chmod 755 "$MODULE_DIR/service.sh"
+    # chmod 755 "$MODULE_DIR/service.sh"
     chmod 755 "$MODULE_DIR/action.sh" 2>/dev/null
     chmod -R 755 "$MODULE_DIR/bin" 2>/dev/null
     echo "[OK] 隐藏模块已安装到 $MODULE_DIR"
@@ -127,7 +127,6 @@ start bsp_kevent
 start qsguard
 echo "OPLUS安全模块已恢复"
 
-# === 隐藏 Root 环境 (已移至 KSU 模块 ksu_hide_module/service.sh) ===
 # 模块在 boot_completed 之前自动执行，时序更优
 echo 2 > /proc/sys/kernel/kptr_restrict
 #

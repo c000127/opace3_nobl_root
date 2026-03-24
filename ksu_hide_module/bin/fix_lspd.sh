@@ -202,3 +202,5 @@ else
     echo "=== ✗ 修复失败 ==="
 fi
 echo "DONE"
+
+sleep 20

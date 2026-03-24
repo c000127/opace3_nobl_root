@@ -37,11 +37,13 @@ else
     echo "已识别到KSU，正在自动覆盖安装，卡住手动重新安装KSU触发重载"
     echo "APK路径: $APK_PATH"
     echo "复制到临时目录"
-        cp "$APK_PATH" /data/adb/modules/m_rcq/_mgr_tmp.apk
+        cp "$APK_PATH" /data/adb/modules/ace3_hide_environment/_mgr_tmp.apk
     echo "覆盖安装中"
-    pm install -r /data/adb/modules/m_rcq/_mgr_tmp.apk
-    rm -f /data/adb/modules/m_rcq/_mgr_tmp.apk
+    pm install -r /data/adb/modules/ace3_hide_environment/_mgr_tmp.apk
+    rm -f /data/adb/modules/ace3_hide_environment/_mgr_tmp.apk
     echo "正在清除临时文件"
     
 fi
     echo "[OK]  模块重载完成"
+
+sleep 20
