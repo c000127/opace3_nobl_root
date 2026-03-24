@@ -1,6 +1,6 @@
 id=ace3_hide_environment
-name=一加Ace3隐藏环境
-version=1.1
+name=一加Ace3重载模块/修复lspd
+version=1.
 versionCode=1
 author=jqchow
-description=隐藏 Root 环境并恢复系统属性。仅供一加Ace3测试使用，后果自负。Use at your own risk!!!
+description=重载模块/修复lspd。仅供一加Ace3测试使用，后果自负。Use at your own risk!!!
