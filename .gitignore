@@ -1,0 +1,11 @@
+# 调试输出
+*.txt
+!README.md
+
+# 补丁产物
+kernelsu_patched.ko
+kallsyms.txt
+
+# IDE
+.vscode/
+.idea/
