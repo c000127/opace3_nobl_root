@@ -22,8 +22,8 @@ ksu_oneclick.bat
 ```
 
 自动完成以下步骤：
-1. 修补并`insmod` 加载KernelSU内核模块
-2. 部署 ksud、执行启动阶段（`post-fs-data → services → boot-completed`）
+1. 修补 KernelSU 内核模块的未定义符号
+2. 加载KernelSU内核模块，部署 ksud、执行启动阶段（`post-fs-data → services → boot-completed`）
 
 ## 注意事项
 
