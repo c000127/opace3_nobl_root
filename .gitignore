@@ -9,3 +9,4 @@ kallsyms.txt
 # IDE
 .vscode/
 .idea/
+tmp/
