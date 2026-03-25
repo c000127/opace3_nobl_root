@@ -2,5 +2,5 @@ id=ace3_hide_environment
 name=一加Ace3重载模块/修复lspd
 version=1.2
 versionCode=1
-author=c000127
+author=Github@c000127
 description=重载模块/修复lspd。仅供一加Ace3测试使用，后果自负。Use at your own risk!!!
