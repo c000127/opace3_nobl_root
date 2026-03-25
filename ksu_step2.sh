@@ -118,9 +118,9 @@ echo ""
 # === 恢复 OPLUS 安全模块===
 #echo ""
 #echo "=== 恢复 OPLUS 安全模块 ==="
-#modprobe oplus_secure_harden 2>/dev/null
-#modprobe oplus_security_guard 2>/dev/null
-#modprobe oplus_security_keventupload 2>/dev/null
+#modprobe -d /vendor/lib/modules/ oplus_secure_harden 2>/dev/null
+#modprobe -d /vendor/lib/modules/ oplus_security_guard 2>/dev/null
+#modprobe -d /vendor/lib/modules/ oplus_security_keventupload 2>/dev/null
 #start riskdetect
 #start oplus_kevents
 #start bsp_kevent
