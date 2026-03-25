@@ -129,6 +129,7 @@ if not errorlevel 1 (
 :: 清理过程临时文件
 adb shell rm -f /data/local/tmp/ksu_step2.sh >nul 2>&1
 
+:cleanup
 if exist "%KALLSYMS%" del "%KALLSYMS%" >nul 2>&1
 if exist "%PATCHED%" del "%PATCHED%" >nul 2>&1
 
@@ -139,4 +140,4 @@ goto :eof
 :fail
 echo.
 echo [X] 执行失败，请检查报错内容。
-pause
+goto cleanup
