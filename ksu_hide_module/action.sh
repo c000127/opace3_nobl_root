@@ -5,7 +5,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "— 请选择操作："
 echo "— [ 音量 加(+): 重载模块 ]"
     echo "— [ 音量 减(-): 修复 LSPosed ]"
-    echo "— [ 8秒内未执行操作自动执行环境隐藏 ]"
+    echo "— [ 8秒内未执行操作自动退出 ]"
     
 START_TIME=$(date +%s)
 while true; do
@@ -14,7 +14,7 @@ while true; do
 
   if [ $(( NOW_TIME - START_TIME )) -gt 8 ]; then
     ui_print "— 超时未执行功能，结束运行"
-    # /data/adb/modules/ace3_hide_environment/bin/hide_env.sh
+    /data/adb/modules/ace3_hide_environment/bin/hide_env.sh
     break
   elif grep -q KEY_VOLUMEUP "$TMPDIR/events"; then
     ui_print "— 检测到音量加键 → 重载模块"

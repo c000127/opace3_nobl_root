@@ -21,17 +21,17 @@ resetprop -w sys.boot_completed 0
 echo 2 > /proc/sys/kernel/kptr_restrict
 
 # === 恢复 OPLUS 安全模块 ===
-modprobe oplus_secure_harden 2>/dev/null
-modprobe oplus_security_guard 2>/dev/null
-modprobe oplus_security_keventupload 2>/dev/null
-start riskdetect 2>/dev/null
-start oplus_kevents 2>/dev/null
-start bsp_kevent 2>/dev/null
-start qsguard 2>/dev/null
+#modprobe oplus_secure_harden 2>/dev/null
+#modprobe oplus_security_guard 2>/dev/null
+#modprobe oplus_security_keventupload 2>/dev/null
+#start riskdetect 2>/dev/null
+#start oplus_kevents 2>/dev/null
+#start bsp_kevent 2>/dev/null
+#start qsguard 2>/dev/null
 
 # === 隐藏 Root 属性 ===
 # Verified Boot 相关
-check_reset_prop "ro.boot.selinux" "enforcing"
+hide_prop "ro.boot.selinux" "enforcing"
 
 # === SELinux 强制模式 ===
 STATUS=$(getenforce)

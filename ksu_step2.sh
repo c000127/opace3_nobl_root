@@ -10,15 +10,15 @@ echo "========================================"
 echo ""
 echo "=== 卸载 OPLUS 安全模块 ==="
 rmmod oplus_security_guard 2>/dev/null && echo "已卸载 oplus_security_guard" || echo "oplus_security_guard 不存在或已卸载"
-rmmod oplus_secure_harden 2>/dev/null && echo "已卸载 oplus_secure_harden" || echo "oplus_secure_harden 不存在或已卸载"
-rmmod oplus_security_keventupload 2>/dev/null && echo "已卸载 oplus_security_keventupload" || echo "oplus_security_keventupload 不存在或已卸载"
+#rmmod oplus_secure_harden 2>/dev/null && echo "已卸载 oplus_secure_harden" || echo "oplus_secure_harden 不存在或已卸载"
+#rmmod oplus_security_keventupload 2>/dev/null && echo "已卸载 oplus_security_keventupload" || echo "oplus_security_keventupload 不存在或已卸载"
 
 # 停止用户空间安全服务
-stop riskdetect 2>/dev/null
-stop oplus_kevents 2>/dev/null
-stop bsp_kevent 2>/dev/null
-stop qsguard 2>/dev/null
-echo "安全服务已停止"
+#stop riskdetect 2>/dev/null
+#stop oplus_kevents 2>/dev/null
+#stop bsp_kevent 2>/dev/null
+#stop qsguard 2>/dev/null
+#echo "安全服务已停止"
 
 # SELinux 设为宽容模式
 setenforce 0
@@ -118,16 +118,16 @@ echo ""
 # === 恢复 OPLUS 安全模块===
 echo ""
 echo "=== 恢复 OPLUS 安全模块 ==="
-modprobe oplus_secure_harden 2>/dev/null
-modprobe oplus_security_guard 2>/dev/null
+#modprobe oplus_secure_harden 2>/dev/null
+#modprobe oplus_security_guard 2>/dev/null
 modprobe oplus_security_keventupload 2>/dev/null
-start riskdetect
-start oplus_kevents
-start bsp_kevent
-start qsguard
+#start riskdetect
+#start oplus_kevents
+#start bsp_kevent
+#start qsguard
 echo "OPLUS安全模块已恢复"
 
-# 模块在 boot_completed 之前自动执行，时序更优
+# 恢复内核安全设置
 echo 2 > /proc/sys/kernel/kptr_restrict
 
 # 隐藏 ro.boot.selinux
