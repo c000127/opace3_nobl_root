@@ -28,7 +28,7 @@ ksu_oneclick.bat
 ## 注意事项
 
 - ⚠️ 重启后失效
-- ⚠️ 仅在 OnePlus Ace 3 ColorOS16 上测试
+- ⚠️ 仅在 OnePlus Ace 3 ColorOS16 (PJE110_16.0.3.500)上测试
 
 ## Credits
 
