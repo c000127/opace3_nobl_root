@@ -116,16 +116,16 @@ dmesg | grep -i "KernelSU" | tail -10
 echo ""
 
 # === 恢复 OPLUS 安全模块===
-echo ""
-echo "=== 恢复 OPLUS 安全模块 ==="
+#echo ""
+#echo "=== 恢复 OPLUS 安全模块 ==="
 #modprobe oplus_secure_harden 2>/dev/null
 #modprobe oplus_security_guard 2>/dev/null
-modprobe oplus_security_keventupload 2>/dev/null
+#modprobe oplus_security_keventupload 2>/dev/null
 #start riskdetect
 #start oplus_kevents
 #start bsp_kevent
 #start qsguard
-echo "OPLUS安全模块已恢复"
+#echo "OPLUS安全模块已恢复"
 
 # 恢复内核安全设置
 echo 2 > /proc/sys/kernel/kptr_restrict
