@@ -1,6 +1,7 @@
 # 调试输出
 *.txt
 !README.md
+!prompts/*.txt
 
 # 补丁产物
 kernelsu_patched.ko
