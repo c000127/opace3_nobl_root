@@ -19,6 +19,8 @@ set "KALLSYMS=%DIR%kallsyms.txt"
 :: ─── 检查 ADB ───
 echo 检查 ADB 连接...
 adb get-state >nul 2>&1
+adb kill-server >nul 2>&1
+adb start-server >nul 2>&1
 if errorlevel 1 (
     echo [X] 没有 ADB 设备，请连接手机
     goto :fail
