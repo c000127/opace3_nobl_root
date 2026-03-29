@@ -135,6 +135,7 @@ adb shell su -c rm -f /data/local/tmp/ksu_step2.sh >nul 2>&1
 adb shell su -c rm -f /data/local/tmp/ksu_step3.sh >nul 2>&1
 
 echo.
+echo close adb server
 adb kill-server >nul 2>&1
 pause
 goto :eof
