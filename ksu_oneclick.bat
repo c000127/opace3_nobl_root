@@ -14,16 +14,17 @@ type "%P%banner.txt"
 echo.
 
 echo [1/6] Checking ADB...
+:check_adb
 adb kill-server >nul 2>&1
 adb start-server >nul 2>&1
 adb get-state >nul 2>&1
-if errorlevel 1 goto no_adb
-goto check_root
+if not errorlevel 1 goto check_root
 
 :no_adb
 type "%P%no_adb.txt"
 echo.
-goto fail
+pause >nul
+goto check_adb
 
 :check_root
 set "USER_ID="
