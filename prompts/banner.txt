@@ -2,7 +2,7 @@
   KernelSU 免解 BL 一键加载脚本
   说明：每次手机重启后运行本脚本
   请提前开启 SELinux 宽容模式：
-    1.执行 adb reboot bootloader
-    2.执行 fastboot oem set-gpu-preemption 0 androidboot.selinux=permissive
-    3.执行 fastboot continue
+    1.开机状态下执行 adb reboot bootloader
+    2.bootloader下执行 fastboot oem set-gpu-preemption 0 androidboot.selinux=permissive
+    3.bootloader下执行 fastboot continue
 ===============================================
