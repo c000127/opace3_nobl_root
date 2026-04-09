@@ -21,18 +21,21 @@ echo ""
 # 关闭KernelSU
 am force-stop me.weishu.kernelsu 2>/dev/null
 
-# === insmod ===
-echo "=== 加载内核模块 ==="
+# === ksud debug insmod ===
+echo "=== 加载内核模块 (ksud debug) ==="
 if grep -q "kernelsu" /proc/modules 2>/dev/null; then
     echo "已加载，跳过"
 else
-    chmod 644 /data/local/tmp/kernelsu_patched.ko 2>/dev/null
-    insmod /data/local/tmp/kernelsu_patched.ko
+    chmod 644 /data/local/tmp/kernelsu.ko 2>/dev/null
+    chmod +x /data/local/tmp/ksud-aarch64 2>/dev/null
+    
+    echo "正在执行寻址装载..."
+    /data/local/tmp/ksud-aarch64 debug insmod /data/local/tmp/kernelsu.ko
     RET=$?
-    echo "insmod 返回码: $RET"
+    echo "装载返回码: $RET"
     if [ $RET -ne 0 ]; then
         echo "LOAD_FAILED"
-        dmesg | grep -i "kernelsu\|Unknown symbol" | tail -10
+        dmesg | tail -10
         exit 1
     fi
 fi
